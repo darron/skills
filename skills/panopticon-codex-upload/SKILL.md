@@ -37,7 +37,7 @@ TXT
 4. Send the transcript to Panopticon (this also writes the JSON log file).
 
 ```bash
-python3 /Users/darron/.codex/skills/panopticon-codex-upload/scripts/send_hook.py \
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/panopticon-codex-upload/scripts/send_hook.py" \
   --transcript-file /tmp/codex-transcript.txt
 ```
 
