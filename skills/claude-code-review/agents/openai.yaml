@@ -1,4 +1,4 @@
 interface:
   display_name: "Claude Code Review"
   short_description: "Adversarial implemented-code review"
-  default_prompt: "Use $claude-code-review after implementing this feature so Claude can review the diff and help tighten the build."
+  default_prompt: "Use $claude-code-review after implementing this feature so Claude can inspect the branch and help tighten the build."

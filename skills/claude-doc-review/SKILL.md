@@ -28,12 +28,13 @@ Use Claude as an adversarial reviewer, not as an authority. The deliverable is a
 
 3. Build a Claude review packet.
    - Include the full document content with line numbers when feasible. Use `nl -ba <doc>` or equivalent.
-   - Include only task-relevant branch facts, current diff, known constraints, and project rules. Avoid unrelated secrets or private context.
+   - Include only task-relevant branch facts, known constraints, and project rules. Avoid unrelated secrets or private context.
+   - For branch-aware plans/specs, include the document path and tell Claude to inspect the repo, git status, relevant diffs, untracked files, schemas, tests, and docs itself. Do not paste massive code diffs when Claude can read the checkout.
    - If the document is too large, include a table of contents plus the sections under review, but prefer full content for plans/specs.
    - Keep temporary prompts and review outputs under `${TMPDIR:-/tmp}/claude-doc-review-<short-slug>/` or in ephemeral conversation context. Do not create committed review artifacts unless the user asks.
 
 4. Run the adversarial review with `claude -p`.
-   - If Claude is not logged in, sandboxed, or otherwise unavailable, request the needed approval or report the blocker. Never fake a Claude review.
+   - If Claude is not logged in or otherwise unavailable, report the blocker. If sandboxing blocks execution, rerun with escalation and request a scoped persistent prefix rule for `["claude", "-p"]` when appropriate. Never fake a Claude review.
    - Store review output in working notes or temporary context, not as a permanent review section inside the final document.
    - Use a prompt shaped like:
 
@@ -42,12 +43,13 @@ You are an adversarial technical document reviewer.
 
 Context:
 - Document: <path>
+- Full document content with line numbers: <included when feasible>
 - Repo/branch/commit: <repo facts>
 - User goal: <goal>
 - Approval boundary: <whether implementation must wait>
 - Important project rules: <short bullets>
 
-Review only the document and its build-readiness. Do not rewrite it.
+Review only the document and its build-readiness. Do not rewrite it. Inspect the repo, git status, relevant diffs, untracked files, schemas, tests, and docs yourself when needed to check whether this plan matches the current branch. Do not require a pasted code diff.
 
 Find:
 - stale assumptions compared with the current branch
@@ -92,6 +94,7 @@ Output:
 ## Failure Rules
 
 - Do not treat Claude's output as evidence. Treat it as critique to verify.
+- Do not paste massive code diffs into a branch-aware doc review when Claude can inspect the checkout.
 - Do not accept broad rewrite suggestions that reduce specificity, remove tests, or hide operational semantics.
 - Do not leave unrelated working-tree changes mixed into the document update.
 - Do not claim "ready" until Claude confirmation and local verification both support that claim, or until you clearly state the remaining unresolved risk.

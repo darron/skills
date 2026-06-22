@@ -1,0 +1,4 @@
+interface:
+  display_name: "Amp Review"
+  short_description: "Run adversarial Amp reviews"
+  default_prompt: "Use $amp-review to get an adversarial review of this branch."

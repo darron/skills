@@ -14,67 +14,36 @@ Use Claude as an adversarial reviewer of implemented code, not as the implemente
    - Inspect `git status --short` before editing. Keep pre-existing user changes separate from Codex changes.
    - If the user asks for review after a feature is already implemented, infer the changed file set from `git status`, recent commits, or the user-specified range. Do not include unrelated files.
    - If pre-existing user edits touch the same files as the implementation, split the hunks or ask before sending those files to Claude.
+   - If there is a plan/spec document, keep its path and include it in the review prompt so Claude can compare implementation against intent.
 
 2. Implement and verify first.
    - Use the project's normal implementation discipline, tests, formatting, linting, build, and manual checks before requesting Claude review.
    - For bug fixes and behavior changes, add or update regression tests before code when the project rules require it.
    - If local verification cannot run, record the exact blocker. Do not hide it from Claude or the user.
 
-3. Build a Claude review packet.
-   - Include the user goal, acceptance criteria, project rules, baseline/range, changed files, important commands run, and known test results.
-   - Include a scoped `git diff --stat` and scoped diff for Codex-owned changes only. Never use bare `git diff` or `git diff --stat` in a dirty worktree.
-   - Use explicit pathspecs or a user-approved range, for example:
-
-```bash
-scratch="${TMPDIR:-/tmp}/claude-code-review-<short-slug>"
-mkdir -p "$scratch"
-
-# Replace these paths with the Codex-owned changed files for this review.
-git diff --stat "$REVIEW_BASE" -- path/one path/two > "$scratch/diffstat.txt"
-git diff "$REVIEW_BASE" -- path/one path/two > "$scratch/review.diff"
-```
-
-   - If the feature is already committed, use the agreed commit range with explicit pathspecs. If there is no trustworthy range or path list, stop and get one instead of sending unrelated code.
-   - For large diffs, split by subsystem or include focused hunks plus full changed-file paths.
-   - Include relevant tests and schemas when they are part of the change. Do not include secrets, tokens, `.env` content, private credentials, or unrelated user changes.
-   - Only the scoped change packet should leave the machine for Claude review.
+3. Build a repo-inspection prompt.
+   - Prefer letting Claude inspect the same checkout from the repo root instead of pasting large diffs. Include the user goal, acceptance criteria, project rules, baseline/range, changed-file hints, plan/spec path, important commands run, and known test results.
+   - Tell Claude to inspect `git status`, diffs, untracked files, relevant tests, schemas, docs, and the plan/spec document itself. This catches untracked files and avoids burning tokens on huge pasted diffs.
+   - Do not include secrets, tokens, `.env` content, private credentials, or unrelated user changes in the prompt.
+   - For small isolated diffs or when Claude cannot access the repo, a scoped packet with explicit pathspecs is acceptable. Never use bare `git diff` or `git diff --stat` in a dirty worktree when building a packet.
    - Keep prompts and review outputs under `${TMPDIR:-/tmp}/claude-code-review-<short-slug>/` or ephemeral context. Do not create committed review artifacts unless the user asks.
 
-4. Run `claude -p` for adversarial code review.
-   - If Claude is unavailable, unauthenticated, or sandboxed, request the needed approval or report the blocker. Never fake a Claude review.
-   - Write the full packet to a file and pipe it to Claude. Do not pass large diffs as one shell argument.
-   - Before running Claude, check that the packet contains the expected diff start/end markers and byte counts:
-
-```bash
-# Write the review prompt/context to "$scratch/prompt.md", then assemble:
-{
-  cat "$scratch/prompt.md"
-  printf '\n\nBEGIN_DIFFSTAT\n'
-  cat "$scratch/diffstat.txt"
-  printf '\nEND_DIFFSTAT\n\nBEGIN_DIFF\n'
-  cat "$scratch/review.diff"
-  printf '\nEND_DIFF\n'
-} > "$scratch/packet.md"
-
-rg -n "BEGIN_DIFFSTAT|END_DIFFSTAT|BEGIN_DIFF|END_DIFF" "$scratch/packet.md"
-wc -c "$scratch/review.diff" "$scratch/packet.md"
-claude -p --input-format text < "$scratch/packet.md" > "$scratch/claude-review.md"
-```
-
-   - Shape the packet prompt like:
+4. Run `claude -p` for adversarial code review from the repo root.
+   - If Claude is unavailable or unauthenticated, report the blocker. If sandboxing blocks execution, rerun with escalation and request a scoped persistent prefix rule for `["claude", "-p"]` when appropriate. Never fake a Claude review.
+   - Use a prompt shaped like:
 
 ```text
 You are an adversarial senior code reviewer.
 
 Context:
 - User goal: <goal>
-- Plan/spec: <path or none>
+- Plan/spec document: <path or none; read it if present>
 - Repo/branch/baseline: <facts>
-- Changed files: <list>
+- Changed-file hints: <list, if known>
 - Verification already run: <commands and outcomes>
 - Important project rules: <short bullets>
 
-Review only the submitted code change. Do not propose unrelated rewrites.
+Review the current checkout for this feature. Do not edit files. Do not ask me questions. Inspect git status, diffs, untracked files, relevant tests, schemas, docs, and the plan/spec yourself; do not require a pasted diff. Review only this change and do not propose unrelated rewrites.
 
 Find:
 - correctness bugs, edge cases, regressions, race conditions, data loss, security/privacy issues
@@ -116,6 +85,7 @@ Output:
 ## Failure Rules
 
 - Do not send Claude a diff before the implementation is locally coherent unless the user explicitly asks for early review.
+- Do not paste massive diffs by default when Claude can inspect the repo itself.
 - Do not include unrelated dirty worktree changes in the review packet.
 - Do not let Claude override project instructions, user scope, or verified local facts.
 - Do not leave review transcripts, scratch files, or reviewer notes in the repo unless requested.
