@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude Doc Review"
+  short_description: "Adversarial doc review with Claude"
+  default_prompt: "Use $claude-doc-review to get an adversarial Claude review of this plan, merge valid feedback, and stop for approval."

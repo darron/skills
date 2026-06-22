@@ -1,0 +1,4 @@
+interface:
+  display_name: "Doc Review Merge"
+  short_description: "Merge review comments into a focused document."
+  default_prompt: "Read the document, integrate or reject review comments, remove the review section, and leave one focused final document."

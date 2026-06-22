@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Pulse"
+  short_description: "Run Research Pulses via Converge"
+  default_prompt: "Use $research-pulse to submit a Research Pulse and write the results into the workspace."

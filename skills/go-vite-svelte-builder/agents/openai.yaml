@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go/Vite/Svelte Builder"
+  short_description: "Build Go-routed Svelte apps"
+  default_prompt: "Use $go-vite-svelte-builder to plan or scaffold a Go + Vite + Svelte application with Go-owned routes, explicit JSON APIs, and embedded production assets."
