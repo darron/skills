@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Review"
+  short_description: "Get independent Codex reviews"
+  default_prompt: "Use $codex-review to get an adversarial review of this branch or plan."
