@@ -12,7 +12,10 @@ Personal Codex and Claude skill backups plus portable project skills.
 - [`doc-review-merge`](skills/doc-review-merge): merge reviewer comments and critique into one coherent final document.
 - [`go-vite-svelte-builder`](skills/go-vite-svelte-builder): planning and implementation guardrails for Go-routed Vite/Svelte apps.
 - [`panopticon-codex-upload`](skills/panopticon-codex-upload): summarize and upload Codex session notes to Panopticon.
-- [`research-pulse`](skills/research-pulse): run Converge Research Pulse workflows through the supported CLI/API contract.
+
+## Moved Skills
+
+- [`research-pulse`](https://github.com/use-converge/skills/tree/main/skills/research-pulse): now maintained in `use-converge/skills`.
 
 ## License
 
