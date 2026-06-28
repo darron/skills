@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pi Ollama Qwen"
+  short_description: "Local Pi/Qwen read-only review lane"
+  default_prompt: "Use $pi-ollama-qwen to run a read-only local Qwen review of the current diff."

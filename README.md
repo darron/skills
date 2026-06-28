@@ -11,7 +11,9 @@ Personal Codex and Claude skill backups plus portable project skills.
 - [`dbrain-review`](skills/dbrain-review): source-linked digest of recent local dbrain activity, with weekly defaults and optional topic focus.
 - [`doc-review-merge`](skills/doc-review-merge): merge reviewer comments and critique into one coherent final document.
 - [`go-vite-svelte-builder`](skills/go-vite-svelte-builder): planning and implementation guardrails for Go-routed Vite/Svelte apps.
+- [`opencode-review`](skills/opencode-review): adversarial OpenCode/GLM review workflow with optional Claude/Amp bakeoff comparison.
 - [`panopticon-codex-upload`](skills/panopticon-codex-upload): summarize and upload Codex session notes to Panopticon.
+- [`pi-ollama-qwen`](skills/pi-ollama-qwen): local-only Pi/Ollama/Qwen read-only review lane for code, diffs, docs, plans, and reviewer bakeoffs.
 
 ## Moved Skills
 

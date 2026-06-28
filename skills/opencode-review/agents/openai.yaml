@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenCode Review"
+  short_description: "Review with OpenCode and GLM"
+  default_prompt: "Use $opencode-review to review this branch with OpenCode GLM."
