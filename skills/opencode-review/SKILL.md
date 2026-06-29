@@ -7,17 +7,18 @@ description: Use when the user explicitly asks Codex to involve OpenCode, openco
 
 Use OpenCode as an independent reviewer with repo-local context, not as an authority and not as an implementer. This is the default low-cost review lane when Claude tokens are exhausted or when the user wants to test whether GLM is good enough for routine review. Keep Amp for expensive high-leverage cases such as docs, launch readiness, subtle architecture risk, or when the work is stuck.
 
-The preferred local setup is OpenCode `1.17.10` with Oh My OpenCode installed, using `zai-coding-plan/glm-5.2` at `high` variant through the `code-review` command.
+The preferred local setup is OpenCode `1.17.10` using `zai-coding-plan/glm-5.2` at `high` variant through the direct `opencode run` path. Do not use the Oh My OpenCode `--command code-review` wrapper as the default path; it has repeatedly exited after dispatching background review IDs without returning findings that Codex can collect.
 
 ## Local Setup
 
 - Preferred model: `zai-coding-plan/glm-5.2`
 - Preferred variant: `high`
-- Preferred command: `code-review`
-- Preferred orchestration: Oh My OpenCode's command invokes three `@code-review` subagents and correlates their findings.
+- Preferred invocation: direct GLM review without `--command`
+- Optional diagnostic command: `code-review`, only when the user explicitly wants the wrapper tested or direct review is unavailable
+- Optional orchestration: Oh My OpenCode's command attempts to invoke three `@code-review` subagents and correlate findings, but this is not reliable enough to be the default.
 - Known active worker agent: `Sisyphus - ultraworker`. Do not rely on it for review unless the `code-review` command is unavailable or the command wrapper fails to return findings; it is more permissive than a reviewer should be.
 - Known wrapper failure: `--command code-review` may try an OpenAI plan subagent, then exit after dispatching background `@code-review` sessions that are cancelled, produce zero tokens, or are left as background IDs that Codex cannot collect. A dispatch log without a severity-ranked findings section is not a completed review.
-- Direct fallback behavior observed in practice: direct `opencode run --dir <repo-root> --model zai-coding-plan/glm-5.2 --variant high "<review guidance>"` can return actionable findings when the command wrapper exits after background dispatch, but it can also hang or emit investigation logs without a final verdict. Count it complete only when it prints severity-ranked findings or an explicit no-findings recommendation.
+- Direct review behavior observed in practice: direct `opencode run --dir <repo-root> --model zai-coding-plan/glm-5.2 --variant high "<review guidance>"` is more likely to return actionable findings than the wrapper. It can still hang or emit investigation logs without a final verdict. Count it complete only when it prints severity-ranked findings or an explicit no-findings recommendation.
 
 Verify the local boundary when behavior is unclear:
 
@@ -45,7 +46,24 @@ If Codex sandboxing blocks OpenCode because it writes logs or state under `~/.lo
    - Do not use OpenCode as a substitute for local verification.
 
 3. Run OpenCode from the repo root.
-   - Prefer Oh My OpenCode's `code-review` command:
+   - Use the direct GLM review path by default:
+
+```bash
+opencode run \
+  --dir <repo-root> \
+  --model zai-coding-plan/glm-5.2 \
+  --variant high \
+  "<review guidance>"
+```
+
+   - Do not pass `--dangerously-skip-permissions` for review.
+   - Do not ask OpenCode to edit files unless the user explicitly asks for OpenCode implementation.
+   - A successful run must return actual findings or an explicit no-findings recommendation. If it only prints setup, diff excerpts, background IDs, or "waiting for completion" text and exits, treat the review as failed.
+   - If a direct run is long and output is quiet, wait. When the user says reviews may take 10 minutes or more, allow that much time before judging the run. If the process is alive but only emits tool chatter, diff excerpts, or partial investigation and never reaches a findings/recommendation section, treat it as unavailable rather than as a completed review.
+   - Do not start duplicate OpenCode runs unless the previous run has exited, clearly failed, or the user explicitly wants a comparison or retry.
+   - If code changes while a review is running, mark that output stale for readiness. Re-run against the refreshed diff before treating the review as final.
+
+   Optional wrapper diagnostic, not the default:
 
 ```bash
 opencode run \
@@ -53,25 +71,10 @@ opencode run \
   --model zai-coding-plan/glm-5.2 \
   --variant high \
   --command code-review \
-  "<review guidance>"
-```
-
-   - Do not pass `--dangerously-skip-permissions` for review.
-   - Do not ask OpenCode to edit files unless the user explicitly asks for OpenCode implementation.
-   - A successful run must return actual findings or an explicit no-findings recommendation. If it only prints setup, diff excerpts, background IDs, or "waiting for completion" text and exits, treat the review as failed. Do not wait for background notifications that Codex has no way to receive; immediately run the direct fallback with the same pinned boundary.
-   - If `--command code-review` is unavailable or exits without findings, try a direct GLM review with the same prompt. First try `--agent code-review`; if OpenCode warns that `code-review` is only a subagent and falls back to the default agent, either let that direct run finish or rerun without `--agent` and record that the fallback used the default OpenCode worker:
-
-```bash
-opencode run \
-  --dir <repo-root> \
-  --model zai-coding-plan/glm-5.2 \
-  --variant high \
   "<same review guidance>"
 ```
 
-   - If a direct fallback run is long and output is quiet, wait. When the user says reviews may take 10 minutes or more, allow that much time before judging the run. If the process is alive but only emits tool chatter, diff excerpts, or partial investigation and never reaches a findings/recommendation section, treat it as unavailable rather than as a completed review.
-   - Do not start duplicate OpenCode runs unless the previous run has exited, clearly failed, or the user explicitly wants a comparison or retry.
-   - If code changes while a review is running, mark that output stale for readiness. Re-run against the refreshed diff before treating the review as final.
+   Use this only when the user explicitly asks to test the wrapper or when diagnosing OpenCode setup. If the wrapper only returns background IDs, dispatch logs, or "waiting" text, do not count it as a review and do not wait for background notifications Codex cannot collect.
 
 4. Use a repo-inspection prompt.
 
@@ -111,7 +114,7 @@ End with an explicit ready/not-ready recommendation.
    - For accepted code findings, add the narrowest regression test when appropriate, implement the fix, then rerun targeted tests and required project gates.
    - For docs/plans, merge accepted feedback into the document and remove review debris.
    - If fixes materially change the branch or OpenCode found P0/P1 issues, consider one focused confirmation pass. Do not loop on taste.
-   - If the preferred command wrapper failed, compare the wrapper failure and fallback quality in the final response. If the direct fallback also hung or produced no final findings, state that OpenCode was unavailable for this pass.
+   - If the optional command wrapper was tried, compare the wrapper failure and direct-review quality in the final response. If the direct review hung or produced no final findings, state that OpenCode was unavailable for this pass.
 
 7. Final response.
    - Report the OpenCode command shape, accepted fixes, important rejected findings, verification commands, and unresolved risk.
@@ -135,7 +138,7 @@ Default reviewer roles:
 2. Run independent reviewers in parallel when the environment permits.
    - Claude lane: follow `claude-code-review` or `claude-doc-review`.
    - Amp lane: follow `amp-review`.
-   - OpenCode lane: run the OpenCode command in this skill.
+   - OpenCode lane: run the direct OpenCode command in this skill.
    - Store scratch prompts and outputs under separate temporary paths such as `${TMPDIR:-/tmp}/review-bakeoff-<slug>/claude`, `/amp`, and `/opencode`; do not commit review artifacts unless requested.
 
 3. Compare reviewer quality, not just verdicts.
@@ -155,6 +158,7 @@ Default reviewer roles:
 - Do not include unrelated dirty worktree changes in the review packet.
 - Do not pass secrets or `.env` contents.
 - Do not use `--dangerously-skip-permissions` for review.
+- Do not start with the `--command code-review` wrapper unless the user explicitly asks to test wrapper behavior.
 - Do not let OpenCode edit files unless explicitly requested.
 - Do not claim GLM is good or bad from one run. Judge it by verified true/false findings across comparable review tasks.
 - Do not count an OpenCode review as completed unless the final output contains findings/recommendation text. Background-session dispatch alone is not evidence of review.
