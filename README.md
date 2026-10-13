@@ -5,6 +5,7 @@ Personal Codex and Claude skill backups plus portable project skills.
 ## Skills
 
 - [`amp-review`](skills/amp-review): adversarial Amp/Oracle review workflow for code, branches, PRs, diffs, documents, plans, and launch readiness.
+- [`build-maintainable-go-tools`](skills/build-maintainable-go-tools): embeddable Go packages, practical CLIs, deliberate dependencies, meaningful tests, and verified release automation.
 - [`claude-code-review`](skills/claude-code-review): adversarial Claude review workflow for implemented code, bug fixes, features, diffs, and final code handoff.
 - [`claude-doc-review`](skills/claude-doc-review): adversarial Claude review workflow for documents, plans, specs, proposals, PRDs, and implementation plans.
 - [`codex-review`](skills/codex-review): Claude Code skill for getting independent OpenAI Codex reviews of code, branches, and design/plan docs via the Codex plugin.

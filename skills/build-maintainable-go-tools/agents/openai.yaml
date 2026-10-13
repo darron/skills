@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Maintainable Go Tools"
+  short_description: "Embeddable Go packages, practical CLIs, proven releases"
+  default_prompt: "Use $build-maintainable-go-tools to build this Go package and CLI with deliberate dependencies, meaningful tests, clear documentation, and verified release automation."
