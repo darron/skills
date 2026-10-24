@@ -1,0 +1,4 @@
+interface:
+  display_name: "Converge Council"
+  short_description: "A small council using Codex and Claude subscriptions"
+  default_prompt: "Use $converge-council to sharpen my question and run a small council with inexpensive models, then synthesize the answer."

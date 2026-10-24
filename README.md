@@ -9,6 +9,7 @@ Personal Codex and Claude skill backups plus portable project skills.
 - [`claude-code-review`](skills/claude-code-review): adversarial Claude review workflow for implemented code, bug fixes, features, diffs, and final code handoff.
 - [`claude-doc-review`](skills/claude-doc-review): adversarial Claude review workflow for documents, plans, specs, proposals, PRDs, and implementation plans.
 - [`codex-review`](skills/codex-review): Claude Code skill for getting independent OpenAI Codex reviews of code, branches, and design/plan docs via the Codex plugin.
+- [`converge-council`](skills/converge-council): subscription-backed Codex/Claude question council with fresh reviews, validated voting, and parent synthesis.
 - [`doc-review-merge`](skills/doc-review-merge): merge reviewer comments and critique into one coherent final document.
 - [`go-vite-svelte-builder`](skills/go-vite-svelte-builder): planning and implementation guardrails for Go-routed Vite/Svelte apps.
 - [`opencode-review`](skills/opencode-review): adversarial OpenCode/GLM review workflow with optional Claude/Amp bakeoff comparison.
