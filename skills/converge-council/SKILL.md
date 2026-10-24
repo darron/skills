@@ -1,6 +1,6 @@
 ---
 name: converge-council
-description: Use when the user wants a Converge-style question council through existing Codex and Claude subscriptions, or requests independent answers, peer voting, and synthesis without Converge API calls.
+description: Use when the user wants a Converge-style question council through existing Codex and Claude access, optionally with Amp review, or requests independent answers, peer voting, and synthesis without Converge API calls.
 ---
 
 # Converge Council
@@ -25,7 +25,9 @@ Use native Codex subagents for OpenAI participants and the signed-in `claude -p`
 
 Default to **pilot** models until the user requests promotion: two fresh Codex agents using an available inexpensive Luna model at low effort, and one fresh Claude Haiku call. Use a supported runtime model identifier, not a guessed model name. Request a model override only when the runtime and current authorization allow it. Never silently inherit an expensive configured model during a pilot. If the cheap choice is unavailable, report it and use remaining eligible participants; ask before upgrading to an expensive model.
 
-Before each launch, check the actual dispatch arguments against the roster: fresh context, explicit approved model, and effort where supported. Record selected models separately from provider/runtime-reported identities. An agent's textual claim about its own model is not model metadata; keep the actual identity `unknown` when telemetry does not expose it.
+Explicit user choices override these defaults for the named author/reviewer roles and effort. Resolve display names to supported identifiers in the relevant runtime; Claude names belong to the Claude route, not the native Codex model list. Do not silently substitute a requested model. When the user requests Amp, add it as an optional fresh reviewer using the installed `amp-review` skill and [references/amp.md](references/amp.md). Preserve its selected mode's configured model routing rather than forcing the pilot model. This adapter covers review, not an independent Amp answering stage.
+
+Before each launch, check the actual dispatch arguments against the roster: fresh context, explicit approved model (or resolved Amp mode preserving its routing), and effort where supported. Record selected models separately from provider/runtime-reported identities. An agent's textual claim about its own model is not model metadata; keep the actual identity `unknown` when telemetry does not expose it.
 
 After answers finish, use one NEW inexpensive Codex reviewer and one NEW Claude Haiku reviewer. The normal run is three answer calls and two review calls; clarification and synthesis happen in the parent. Respect concurrency limits, queueing work as needed. Do not spawn nested councils. More models or an additional deliberation round require a user request.
 
@@ -72,6 +74,8 @@ python3 <skill-dir>/scripts/tally.py <run-dir>/votes.json
 ```
 
 The predeclared rule is normalized Borda (best = 1, worst = 0), averaged within each provider family, then averaged equally across participating families. This prevents several Codex reviewers from automatically outweighing one Claude reviewer. Preserve ties; do not invent a tie-breaker. Show the small review matrix alongside aggregate preferences. This is a workflow convention, not a validated measure of answer truth.
+
+Amp is a distinct reviewer: its prompts, tools, context, and Oracle consultation can produce useful differences even when its main model matches a native participant. Keep its own critique and ranking; do not deduplicate it by model name. For family balancing, group its eligible ballot with the verified family of the main model producing the final ranking; never create an `amp` model family. Disclose Oracle/auxiliary model involvement and correlated evidence rather than claiming model-family grouping proves independence. If main-model family, fresh context, common evidence access, or a complete ranking cannot be established, retain Amp's critique outside the tally and disclose the reason. Record supplemental critique-only roles before dispatch; do not make a promised voting participant disappear from the run record. Oracle advice surfaced through Amp is part of that review, not another ballot.
 
 The helper rejects unknown reviewers, duplicated reviewer ballots, incomplete/duplicate/unknown labels, and reused-author ballots. Missing reviewers stay missing. With fewer than two valid fresh reviewers, report insufficient review coverage; with only one family, report single-family coverage. Neither outcome proves cross-provider agreement. Never count missing/failed votes as abstentions supporting a winner.
 
